@@ -66,7 +66,7 @@ class Circle:
         return deep_copy_array
 
     def show(self):
-        plt.imshow(self.output, cmap='binary')
+        plt.imshow(self.output, cmap='gray')
         plt.title("Circle Pattern")
         plt.axis('off')
         plt.show()
