@@ -58,10 +58,10 @@ class Circle:
         x_axis = np.arange(self.resolution)
         y_axis = np.arange(self.resolution)
         X, Y = np.meshgrid(x_axis, y_axis)
-        self.output = np.ones((self.resolution,self.resolution))
+        self.output = np.zeros((self.resolution,self.resolution))
         circle_mask = ((X-self.x)**2 + (Y-self.y)**2) <= self.radius**2
-        self.output[X[circle_mask],Y[circle_mask]]=0
-        
+        self.output[Y[circle_mask],X[circle_mask]]=1
+     
         deep_copy_array = np.array(self.output, copy=True)
         return deep_copy_array
 
