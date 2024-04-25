@@ -48,17 +48,27 @@ class Checker:
 
 
 class Circle:
-    def __init__(self):
+    def __init__(self, resolution, radius, position):
         self.output = None
+        self.x,self.y = position
+        self.radius = radius
+        self.resolution = resolution
 
     def draw(self):
-        self.output = np.zeros((5, 5))
-        self.output[2, :] = 1
-        self.output[:, 2] = 1
+        x_axis = np.arange(self.resolution)
+        y_axis = np.arange(self.resolution)
+        X, Y = np.meshgrid(x_axis, y_axis)
+        self.output = np.ones((self.resolution,self.resolution))
+        circle_mask = ((X-self.x)**2 + (Y-self.y)**2) <= self.radius**2
+        self.output[X[circle_mask],Y[circle_mask]]=0
+        
+        deep_copy_array = np.array(self.output, copy=True)
+        return deep_copy_array
 
     def show(self):
         plt.imshow(self.output, cmap='binary')
-        plt.title("Observer Pattern")
+        plt.title("Circle Pattern")
         plt.axis('off')
         plt.show()
-        
+
+

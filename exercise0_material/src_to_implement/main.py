@@ -5,10 +5,9 @@ def main():
     checker.draw()
     checker.show()
       
-    # res[:] = 0
-    # print(checker.output)
-    # print(res)
-    
+    circle  = pattern.Circle(400,100,(200,200))
+    circle.draw()
+    circle.show()
     
     
 if __name__=="__main__":
