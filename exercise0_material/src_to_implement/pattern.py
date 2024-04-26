@@ -72,3 +72,87 @@ class Circle:
         plt.show()
 
 
+class Spectrum:
+    def __init__(self, resolution):
+        self.output = None
+        self.resolution = resolution
+
+    def draw(self):
+
+
+        x_axis = np.arange(self.resolution)
+        y_axis = np.arange(self.resolution)
+        X, Y = np.meshgrid(x_axis, y_axis)
+        print(X)
+        print(Y)
+
+        x, y = np.indices((self.resolution, self.resolution))
+
+        # print(x)
+        # print(y)
+
+        X = X / (self.resolution - 1)
+        Y = Y / (self.resolution - 1)
+
+
+        red = X
+
+
+        blue = 1-X
+
+
+        green = Y
+
+
+        rgb_image = np.stack((red, green, blue), axis=-1)
+
+
+        rgb_image = np.clip(rgb_image, 0, 1)
+
+    
+        # a = np.linspace(1,0 ,self.resolution).reshape(self.resolution, 1)
+        # b = np.linspace(1,0 ,self.resolution)
+        # result = a + b 
+        # min_val = np.min(result)
+        # max_val = np.max(result)
+        # range_val = max_val - min_val
+        # normalized_matrix_b= (result - min_val) / range_val
+
+        
+        # a = np.linspace(1,0 ,int(np.round(self.resolution))).reshape(int(np.round(self.resolution)), 1)
+        # b = np.linspace(0,1 , int(np.round(self.resolution)))
+   
+        # result = a + b 
+        # min_val = np.min(result)
+        # max_val = np.max(result)
+
+        # range_val = max_val - min_val
+        # normalized_matrix_r = (result - min_val) / range_val
+        
+    
+        # a =  np.linspace(0,1 ,self.resolution).reshape((self.resolution,1))
+        # c= np.concatenate((np.linspace(0,1 ,int(np.round(self.resolution/2))),np.linspace(1,0 ,int(np.ceil(self.resolution/2)))))
+        
+        # result = a + c
+        # min_val = np.min(result)
+        # max_val = np.max(result)
+        # range_val = max_val - min_val
+        # normalized_matrix_g = np.zeros((self.resolution,self.resolution))
+        
+        
+        # rgb_image = np.dstack((normalized_matrix_r, normalized_matrix_g, normalized_matrix_b))
+        
+
+        self.output = rgb_image
+
+
+        deep_copy_array = np.array(self.output, copy=True)
+        return deep_copy_array
+
+    def show(self):
+        plt.imshow(self.output, cmap='gray')
+        plt.title("Spectrum Pattern")
+        plt.axis('off')
+        plt.show()
+
+
