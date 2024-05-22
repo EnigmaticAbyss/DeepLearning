@@ -1,10 +1,9 @@
 import unittest
-from Layers import  FullyConnected
-from Layers import Base
-# from Optimization import *
+from Layers import *
+from Optimization import *
 from Optimization import Optimizers
 import numpy as np
-# import NeuralNetwork
+import NeuralNetwork
 import matplotlib.pyplot as plt
 import tabulate
 import argparse
