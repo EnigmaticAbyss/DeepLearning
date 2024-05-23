@@ -20,20 +20,25 @@ class FullyConnected(BaseLayer):
         
         self.input_tensor = None
         self._optimizer = None
+        self.gradient_weights = None
     def forward(self, input_tensor):
       
-        self.input_tensor = input_tensor
+        
+        col_of_ones = np.ones(( input_tensor.shape[0],1))
+        
+        self.input_tensor  = np.hstack((input_tensor, col_of_ones))
+  
         
         # Compute the output tensor consuder
         #input in xT
         # input to be b*n rather than n*b by default  thus XT.WT
-        output_tensor = np.dot(input_tensor, self.weights) 
+        output_tensor = np.dot(self.input_tensor, self.weights) 
         return output_tensor
     
     def backward(self, error_tensor):
         # Compute gradients weight X.ET
         
-        grad_weights = np.dot(self.input_tensor.T, error_tensor)
+        self.gradient_weights = np.dot(self.input_tensor.T, error_tensor)
        
         # Propagate the error tensor to the previous layer
         #error tensor is gradient of loss with respect to output of layer
@@ -42,8 +47,9 @@ class FullyConnected(BaseLayer):
         
         #update the weights
         if self._optimizer:
-            self.weights = self._optimizer.update(self.weights, grad_weights)
-            
+            self.weights = self._optimizer.calculate_update(self.weights, self.gradient_weights)
+        #the error has one more redundent column due to w having one more row!
+        error_tensor_prev = error_tensor_prev[:, :-1]    
         return error_tensor_prev
               
     @property
