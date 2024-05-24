@@ -5,19 +5,16 @@ class NeuralNetwork:
         self.optimizer=optimizer
         self.loss=[]
         self.layers=[]
-        self.data_layer = None
-        self.loss_layer = None
     def forward(self):
-        data, self.label = copy.deepcopy(self.data_layer.next())
+        data, self.label_tensor = copy.deepcopy(self.data_layer.next())
         for layer in self.layers:
             data = layer.forward(data)
-        return self.loss_layer.forward(data, copy.deepcopy(self.label))
+        return self.loss_layer.forward(data, copy.deepcopy(self.label_tensor))
     def backward(self):
-        y = copy.deepcopy(self.label)
+        y = copy.deepcopy(self.label_tensor)
         y = self.loss_layer.backward(y)
         for layer in reversed(self.layers):
             y = layer.backward(y)
-            
     def append_layer(self,layer):
         if layer.trainable:
             layer.optimizer =copy.deepcopy(self.optimizer)
