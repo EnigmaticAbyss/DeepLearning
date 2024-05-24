@@ -24,11 +24,11 @@ class NeuralNetwork:
         self.layers.append(layer)
     def train(self,iterations):
         for epoch in range(iterations):
-            self.loss.append(self.froward()) # calculate the froward pass for loss
+            self.loss.append(self.forward()) # calculate the froward pass for loss
             self.backward()
             
     
     def test(self,input_tensor):
         for layer in self.layers:
-            input_tensor=layer.froward(input_tensor)
+            input_tensor=layer.forward(input_tensor)
         return input_tensor
