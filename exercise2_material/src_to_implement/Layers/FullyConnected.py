@@ -21,20 +21,18 @@ class FullyConnected(BaseLayer):
         self.input_tensor = None
         self._optimizer = None
         self.gradient_weights = None
+        
+        self.bias=None
+        
     def forward(self, input_tensor):
-      
-        
         col_of_ones = np.ones(( input_tensor.shape[0],1))
-        
         self.input_tensor  = np.hstack((input_tensor, col_of_ones))
-  
         
         # Compute the output tensor consuder
         #input in xT
         # input to be b*n rather than n*b by default  thus XT.WT
         output_tensor = np.dot(self.input_tensor, self.weights) 
         return output_tensor
-    
     def backward(self, error_tensor):
         # Compute gradients weight X.ET
         
@@ -51,7 +49,11 @@ class FullyConnected(BaseLayer):
         #the error has one more redundent column due to w having one more row!
         error_tensor_prev = error_tensor_prev[:, :-1]    
         return error_tensor_prev
-              
+    
+    def initialize(self,weights_initializer, bias_initializer):
+        self.weights=weights_initializer.initialize(self.weights.shape, self.input_size, self.output_size)    
+        self.bias = bias_initializer.initialize(self.bias.shape, 1, self.output_size)
+    
     @property
     def optimizer(self):
         return self._optimizer
