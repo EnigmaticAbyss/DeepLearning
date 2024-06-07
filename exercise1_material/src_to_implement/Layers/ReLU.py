@@ -25,14 +25,14 @@ class ReLU(BaseLayer):
         grad_input = np.where(self.input_tensor > 0, 1, 0)
         return grad_input * error_tensor
               
-def softmax_backward(dL_dy, y):
-    # dL_dy: Gradient of the loss with respect to the output of the softmax layer (E_n)
-    # y: Output of the softmax layer (predicted probabilities)
+# def softmax_backward(dL_dy, y):
+#     # dL_dy: Gradient of the loss with respect to the output of the softmax layer (E_n)
+#     # y: Output of the softmax layer (predicted probabilities)
     
-    # Compute the correction term for each element in the batch
-    correction = np.sum(dL_dy * y, axis=1, keepdims=True)
+#     # Compute the correction term for each element in the batch
+#     correction = np.sum(dL_dy * y, axis=1, keepdims=True)
     
-    # Compute the gradient w.r.t. input to softmax using the formula
-    grad_input = dL_dy - correction * y
+#     # Compute the gradient w.r.t. input to softmax using the formula
+#     grad_input = dL_dy - correction * y
     
-    return grad_input
+#     return grad_input
