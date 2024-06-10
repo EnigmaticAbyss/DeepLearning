@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import numpy as np
 import scipy.signal
 
@@ -110,3 +111,11 @@ class Conv:
     @optimizer.setter
     def optimizer(self, opt):
         self._optimizer = opt
+=======
+from Layers import Base
+class Conv(Base.BaseLayer):
+    def __init__(self, stride_shape, convolution_shape, num_kernels:int):
+        self.trainable=True
+        
+        pass
+>>>>>>> 4e55f170a0ccbef00b09d1d4d62a8a3e8363d1af
