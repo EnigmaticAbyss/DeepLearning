@@ -3,17 +3,11 @@ from scipy.signal import correlate, correlate2d
 import numpy as np
 
 class Conv:
-    def __init__(self, stride_shape, convolution_shape, num_kernels):
+    def __init__(self, stride_shape, convolution_shape, num_kernels:int):
         self.trainable = True
 
         # Handle stride_shape
-        if isinstance(stride_shape, int):
-            self.stride_shape = (stride_shape,)
-        elif isinstance(stride_shape, tuple):
-            self.stride_shape = stride_shape
-        else:
-            raise ValueError("Invalid stride_shape, must be int or tuple")
-
+        self.stride_shape= self.__handleStrideShape(stride_shape)
         # Handle convolution_shape
         if len(convolution_shape) not in [2, 3]:
             raise ValueError("Invalid convolution_shape, must be [c, m] or [c, m, n]")
@@ -132,3 +126,15 @@ class Conv:
     def initialize(self, weights_initializer, bias_initializer):
         self.weights = weights_initializer.initialize(self.weights.shape)
         self.bias = bias_initializer.initialize(self.bias.shape)
+    def __handleStrideShape(self,stride_shape):
+        if isinstance(stride_shape, int):
+            stride_shapeRes = (stride_shape,stride_shape)
+        elif isinstance(stride_shape, tuple):
+            stride_shapeRes = stride_shape
+        elif isinstance(stride_shape,list):
+            stride_shapeRes = (stride_shape[0], stride_shape[0])
+        else:
+            print(type(stride_shape))
+            raise ValueError("Invalid stride_shape, must be int or tuple")
+        return stride_shapeRes
+        
