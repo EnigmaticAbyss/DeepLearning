@@ -2,7 +2,7 @@ import numpy as np
 from scipy.signal import correlate, correlate2d
 import numpy as np
 import copy
-
+from enum import Enum
 class Conv:
     def __init__(self, stride_shape, convolution_shape, num_kernels:int):
         self.trainable = True
@@ -13,7 +13,7 @@ class Conv:
         if len(convolution_shape) not in [2, 3]:
             raise ValueError("Invalid convolution_shape, must be [c, m] or [c, m, n]")
         self.convolution_shape = convolution_shape
-
+        self.convMode=ConvMode(len(convolution_shape))
         # Initialize weights and biases
         self.weights = np.random.uniform(0, 1, size=(num_kernels, *convolution_shape))
         self.bias = np.random.uniform(0, 1, size=(num_kernels,))
@@ -21,7 +21,7 @@ class Conv:
         # Initialize gradients
         self._gradient_weights = np.zeros_like(self.weights)
         self._gradient_bias = np.zeros_like(self.bias)
-        if len(convolution_shape)!=3:
+        if self.convMode!=ConvMode.Conv3:
             self.convolution_shape=(*convolution_shape,1)
             self.weights= self.weights[:,:,:np.newaxis]
         
@@ -51,7 +51,7 @@ class Conv:
 
     def forward(self, input_tensor):
         self.input_tensor = input_tensor
-        if len(self.convolution_shape) == 2:
+        if self.convMode == ConvMode.Conv2:
             # 1D convolution
             b, c, y = input_tensor.shape
             c_in, m = self.convolution_shape
@@ -87,7 +87,7 @@ class Conv:
         return output_tensor
 
     def backward(self, error_tensor):
-        if len(self.convolution_shape) == 2:
+        if self.convMode == ConvMode.Conv1:
             # 1D convolution
             b, c, y = self.input_tensor.shape
             c_in, m = self.convolution_shape
@@ -142,4 +142,9 @@ class Conv:
             print(type(stride_shape))
             raise ValueError("Invalid stride_shape, must be int or tuple")
         return stride_shapeRes
-        
+
+
+class ConvMode(Enum):
+    Conv1 = 1
+    Conv2 = 2
+    Conv3 = 3
