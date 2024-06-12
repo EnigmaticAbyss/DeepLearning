@@ -129,8 +129,8 @@ class Conv:
         return grad_input_tensor
 
     def initialize(self, weights_initializer, bias_initializer):
-        self.weights = weights_initializer.initialize(self.weights.shape)
-        self.bias = bias_initializer.initialize(self.bias.shape)
+        self.weights = weights_initializer.initialize(self.weights.shape, np.prod(self.convolution_shape), np.prod(self.convolution_shape[1:]) * self.num_kernels)
+        self.bias = bias_initializer.initialize(self.bias.shape, 1, self.num_kernels)
     def __handleStrideShape(self,stride_shape):
         if isinstance(stride_shape, int):
             stride_shapeRes = (stride_shape,stride_shape)
