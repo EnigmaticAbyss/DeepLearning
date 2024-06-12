@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import correlate, correlate2d
 import numpy as np
+import copy
 
 class Conv:
     def __init__(self, stride_shape, convolution_shape, num_kernels:int):
@@ -13,9 +14,6 @@ class Conv:
             raise ValueError("Invalid convolution_shape, must be [c, m] or [c, m, n]")
         self.convolution_shape = convolution_shape
 
-        # Set number of kernels
-        self.num_kernels = num_kernels
-
         # Initialize weights and biases
         self.weights = np.random.uniform(0, 1, size=(num_kernels, *convolution_shape))
         self.bias = np.random.uniform(0, 1, size=(num_kernels,))
@@ -23,6 +21,12 @@ class Conv:
         # Initialize gradients
         self._gradient_weights = np.zeros_like(self.weights)
         self._gradient_bias = np.zeros_like(self.bias)
+        if len(convolution_shape)!=3:
+            self.convolution_shape=(*convolution_shape,1)
+            self.weights= self.weights[:,:,:np.newaxis]
+        
+        # Set number of kernels
+        self.num_kernels = num_kernels
 
         # Optimizer
         self._optimizer = None
@@ -42,7 +46,8 @@ class Conv:
     @optimizer.setter
     def optimizer(self, opt):
         self._optimizer = opt
-        self._optimizer_bias = opt.copy()
+        self._optimizer_bias = copy.deepcopy(opt)
+        self._optimizer_weights=copy.deepcopy(opt)
 
     def forward(self, input_tensor):
         self.input_tensor = input_tensor
