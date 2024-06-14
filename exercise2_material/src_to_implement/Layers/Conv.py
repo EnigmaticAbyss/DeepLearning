@@ -8,11 +8,8 @@ import copy
 class Conv(Base.BaseLayer):
     def __init__(self, stride_shape, convolution_shape, num_kernels):
         self.trainable = True
-        if type(stride_shape) == int:
-            stride_shape = (stride_shape, stride_shape)
-        elif len(stride_shape) == 1:
-            stride_shape = (stride_shape[0], stride_shape[0])
-        self.stride_shape = stride_shape
+        # Handle stride_shape
+        self.stride_shape= self.__handleStrideShape(stride_shape)
         self.conv2d = (len(convolution_shape) == 3)
         self.weights = np.random.uniform(size=(num_kernels, *convolution_shape))
         if self.conv2d:
@@ -150,7 +147,17 @@ class Conv(Base.BaseLayer):
         self.weights = weights_initializer.initialize(self.weights.shape, np.prod(self.convolution_shape),
                                                       np.prod(self.convolution_shape[1:]) * self.num_kernels)
         self.bias = bias_initializer.initialize(self.bias.shape, 1, self.num_kernels)
-
+    def __handleStrideShape(self,stride_shape):
+        if isinstance(stride_shape, int):
+            stride_shapeRes = (stride_shape,stride_shape)
+        elif isinstance(stride_shape, tuple):
+            stride_shapeRes = stride_shape
+        elif isinstance(stride_shape,list):
+            stride_shapeRes = (stride_shape[0], stride_shape[0])
+        else:
+            print(type(stride_shape))
+            raise ValueError("Invalid stride_shape, must be int or tuple")
+        return stride_shapeRes
 # import numpy as np
 # import scipy.signal
 # class Conv:
