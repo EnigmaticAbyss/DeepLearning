@@ -3,22 +3,23 @@ from scipy import signal
 from Layers import Base
 from scipy.signal import correlate2d, convolve2d
 import copy
-
+from enum import Enum
 
 class Conv(Base.BaseLayer):
-    def __init__(self, stride_shape, convolution_shape, num_kernels):
+    def __init__(self, stride_shape, convolution_shape, num_kernels:int):
         self.trainable = True
         # Handle stride_shape
         self.stride_shape= self.__handleStrideShape(stride_shape)
-        self.conv2d = (len(convolution_shape) == 3)
-        self.weights = np.random.uniform(size=(num_kernels, *convolution_shape))
-        if self.conv2d:
+        self.convMode:ConvMode=ConvMode(len(convolution_shape))
+        self.weights = np.random.uniform(0,1,size=(num_kernels, *convolution_shape))
+        self.bias = np.random.uniform(0,1,size=(num_kernels,))
+        if self.convMode==ConvMode.Conv2:
             self.convolution_shape = convolution_shape
         else:
             self.convolution_shape = (*convolution_shape, 1)
             self.weights = self.weights[:, :, :, np.newaxis]
-        self.num_kernels = num_kernels
-        self.bias = np.random.uniform(size=(num_kernels,))
+        self.num_kernels:int = num_kernels
+        
         self.gradient_weights = None
         self.gradient_bias = None
         self._optimizer = None
@@ -70,7 +71,7 @@ class Conv(Base.BaseLayer):
                             output_tensor[n, f, i, j] += self.bias[f]
                         else:
                             output_tensor[n, f, i, j] = 0
-        if not self.conv2d:
+        if self.convMode==ConvMode.Conv1:
             output_tensor = output_tensor.squeeze(axis=3)  # just to solve error in 1d case
         return output_tensor
 
@@ -86,7 +87,7 @@ class Conv(Base.BaseLayer):
 
     def backward(self, error_tensor):
         self.error_T = error_tensor.reshape(self.output_shape)
-        if not self.conv2d:
+        if self.convMode==ConvMode.Conv1:
             self.input_tensor = self.input_tensor[:, :, :, np.newaxis]
         # upsample
         self.up_error_T = np.zeros((self.input_tensor.shape[0], self.num_kernels, *self.input_tensor.shape[2:]))
@@ -139,7 +140,7 @@ class Conv(Base.BaseLayer):
             self.weights = self._optimizer.weights.calculate_update(self.weights, self.gradient_weights)
             self.bias = self._optimizer.bias.calculate_update(self.bias, self.gradient_bias)
 
-        if not self.conv2d:
+        if self.convMode==ConvMode.Conv1:
             return_tensor = return_tensor.squeeze(axis=3)  # just to solve error in 1d case
         return return_tensor
 
@@ -158,6 +159,9 @@ class Conv(Base.BaseLayer):
             print(type(stride_shape))
             raise ValueError("Invalid stride_shape, must be int or tuple")
         return stride_shapeRes
+class ConvMode(Enum):
+    Conv1 = 2
+    Conv2 = 3
 # import numpy as np
 # import scipy.signal
 # class Conv:
