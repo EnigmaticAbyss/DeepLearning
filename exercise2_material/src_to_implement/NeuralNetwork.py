@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 class NeuralNetwork:
-    def __init__(self, optimizer):
+    def __init__(self, optimizer,weight_init,bias_init):
         self.optimizer=optimizer
         self.loss=[]
         self.layers=[]
