@@ -19,17 +19,14 @@ class Conv(Base.BaseLayer):
             self.convolution_shape = (*convolution_shape, 1)
             self.weights = self.weights[:, :, :, np.newaxis]
         self.num_kernels:int = num_kernels
-        
         self.gradient_weights = None
         self.gradient_bias = None
         self._optimizer = None
-        self.lastShape = None
 
     def forward(self, input_tensor):
         self.input_tensor = input_tensor
         if input_tensor.ndim == 3:
             input_tensor = input_tensor[:, :, :, np.newaxis]
-        self.lastShape = input_tensor.shape
         padded_image = np.zeros((input_tensor.shape[0], input_tensor.shape[1],
                                  input_tensor.shape[2] + self.convolution_shape[1] - 1,
                                  input_tensor.shape[3] + self.convolution_shape[2] - 1))
@@ -43,22 +40,21 @@ class Conv(Base.BaseLayer):
 
         input_tensor = padded_image
         self.padded = padded_image.copy()
-        # dimensions of the output
+        # dims output
         h_cnn = np.ceil((padded_image.shape[2] - self.convolution_shape[1] + 1) / self.stride_shape[0])
         v_cnn = np.ceil((padded_image.shape[3] - self.convolution_shape[2] + 1) / self.stride_shape[1])
 
         output_tensor = np.zeros((input_tensor.shape[0], self.num_kernels, int(h_cnn), int(v_cnn)))
         self.output_shape = output_tensor.shape
 
-        # loop through the number of examples
         for n in range(input_tensor.shape[0]):
-            # loop through the number of filters
+            # Ro filter ha
             for f in range(self.num_kernels):
-                # loop through the height of the output
+                # ro hight of output
                 for i in range(int(h_cnn)):
-                    # loop through the width of the output
+                    # ro weights of output
                     for j in range(int(v_cnn)):
-                        # check if within weights limits
+                        # check weights limits
                         if ((i * self.stride_shape[0]) + self.convolution_shape[1] <= input_tensor.shape[2]) and (
                                 (j * self.stride_shape[1]) + self.convolution_shape[2] <= input_tensor.shape[3]):
                             output_tensor[n, f, i, j] = np.sum(input_tensor[n, :,
@@ -71,8 +67,9 @@ class Conv(Base.BaseLayer):
                             output_tensor[n, f, i, j] += self.bias[f]
                         else:
                             output_tensor[n, f, i, j] = 0
+        # moshkele conv1d ro hal kone 
         if self.convMode==ConvMode.Conv1:
-            output_tensor = output_tensor.squeeze(axis=3)  # just to solve error in 1d case
+            output_tensor = output_tensor.squeeze(axis=3)  
         return output_tensor
 
     @property
@@ -89,59 +86,58 @@ class Conv(Base.BaseLayer):
         self.error_T = error_tensor.reshape(self.output_shape)
         if self.convMode==ConvMode.Conv1:
             self.input_tensor = self.input_tensor[:, :, :, np.newaxis]
-        # upsample
+
         self.up_error_T = np.zeros((self.input_tensor.shape[0], self.num_kernels, *self.input_tensor.shape[2:]))
         return_tensor = np.zeros(self.input_tensor.shape)
-        # For Padded input image
-        self.de_padded = np.zeros(
+        
+        
+        de_padded = np.zeros(
             (*self.input_tensor.shape[:2], self.input_tensor.shape[2] + self.convolution_shape[1] - 1,
              self.input_tensor.shape[3] + self.convolution_shape[2] - 1))
-        # Bias
+        
         self.gradient_bias = np.zeros(self.num_kernels)
-        # gradient with respect to the weights
+    
         self.gradient_weights = np.zeros(self.weights.shape)
 
-        # Padding
-        # input padding we pad with half of the kernel size
-        pad_up = int(np.floor(self.convolution_shape[2] / 2))  # (3, 5, 8)
+        pad_up = int(np.floor(self.convolution_shape[2] / 2))
         pad_left = int(np.floor(self.convolution_shape[1] / 2))
 
         for batch in range(self.up_error_T.shape[0]):
             for kernel in range(self.up_error_T.shape[1]):
-                # gradient with respect to the bias
+
                 self.gradient_bias[kernel] += np.sum(error_tensor[batch, kernel, :])
 
                 for h in range(self.error_T.shape[2]):
                     for w in range(self.error_T.shape[3]):
-                        # we fill up with the strided error tensor
+
                         self.up_error_T[batch, kernel, h * self.stride_shape[0], w * self.stride_shape[1]] = \
                         self.error_T[batch, kernel, h, w]
 
-                for ch in range(self.input_tensor.shape[1]):  # channel num
+                for ch in range(self.input_tensor.shape[1]):  
                     return_tensor[batch, ch, :] += convolve2d(self.up_error_T[batch, kernel, :],
-                                                              self.weights[kernel, ch, :], 'same')  # zero padding
+                                                              self.weights[kernel, ch, :], 'same')  
 
-            # Delete the padding
+
             for n in range(self.input_tensor.shape[1]):
-                for h in range(self.de_padded.shape[2]):
-                    for w in range(self.de_padded.shape[3]):
+                for h in range(de_padded.shape[2]):
+                    for w in range(de_padded.shape[3]):
                         if (h > pad_left - 1) and (h < self.input_tensor.shape[2] + pad_left):
                             if (w > pad_up - 1) and (w < self.input_tensor.shape[3] + pad_up):
-                                self.de_padded[batch, n, h, w] = self.input_tensor[batch, n, h - pad_left, w - pad_up]
+                                de_padded[batch, n, h, w] = self.input_tensor[batch, n, h - pad_left, w - pad_up]
 
             for kernel in range(self.num_kernels):
                 for c in range(self.input_tensor.shape[1]):
-                    # convolution of the error tensor with the padded input tensor
-                    self.gradient_weights[kernel, c, :] += correlate2d(self.de_padded[batch, c, :],
+
+                    self.gradient_weights[kernel, c, :] += correlate2d(de_padded[batch, c, :],
                                                                        self.up_error_T[batch, kernel, :],
-                                                                       'valid')  # valid padding
+                                                                       'valid')  
 
         if self._optimizer is not None:
             self.weights = self._optimizer.weights.calculate_update(self.weights, self.gradient_weights)
             self.bias = self._optimizer.bias.calculate_update(self.bias, self.gradient_bias)
 
         if self.convMode==ConvMode.Conv1:
-            return_tensor = return_tensor.squeeze(axis=3)  # just to solve error in 1d case
+            return_tensor = return_tensor.squeeze(axis=3) 
         return return_tensor
 
     def initialize(self, weights_initializer, bias_initializer):
