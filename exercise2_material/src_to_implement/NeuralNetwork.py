@@ -3,6 +3,8 @@ import numpy as np
 class NeuralNetwork:
     def __init__(self, optimizer,weight_init,bias_init):
         self.optimizer=optimizer
+        self.weight_init=weight_init
+        self.bias_init=bias_init
         self.loss=[]
         self.layers=[]
     def forward(self):
@@ -17,6 +19,7 @@ class NeuralNetwork:
             y = layer.backward(y)
     def append_layer(self,layer):
         if layer.trainable:
+            layer.initialize(self.weight_init, self.bias_init)
             layer.optimizer =copy.deepcopy(self.optimizer)
         self.layers.append(layer)
     def train(self,iterations):
