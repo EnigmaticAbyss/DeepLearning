@@ -58,8 +58,10 @@ class Conv(Base.BaseLayer):
         v_cnn = np.ceil((padded_image.shape[3] - self.convolution_shape[2] + 1) / self.stride_shape[1])
 
         output_tensor = np.zeros((input_tensor.shape[0], self.num_kernels, int(h_cnn), int(v_cnn)))
-        self.output_shape = output_tensor.shape
+        
 
+                
+                
         for n in range(input_tensor.shape[0]):
             # Ro filter ha
             for f in range(self.num_kernels):
@@ -212,7 +214,14 @@ class ConvMode(Enum):
     
     
     
-    
+            
+        # self.output_shape = output_tensor.shape
+        # for b in range(input_tensor.shape[0]):
+        #     for k in range(self.num_kernels):
+        #         for c in range(input_tensor.shape[1]):
+                   
+        #             output_tensor[b, k] += signal.correlate2d(input_tensor[b, c], self.weights[k, c], mode='valid')[::self.stride_shape[0], ::self.stride_shape[1]]
+        #         output_tensor[b, k] += self.bias[k] 
     
     
     
