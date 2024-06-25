@@ -1,6 +1,7 @@
 class BaseLayer:
     def __init__(self):
-        self.trainable = False  
+        self.trainable = False
+        self.testing_phase=False  
         self.weights = None
     def forward(self, input_tensor):
  

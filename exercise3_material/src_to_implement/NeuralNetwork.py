@@ -12,6 +12,8 @@ class NeuralNetwork:
         data, self.label_tensor = copy.deepcopy(self.data_layer.next())
         for layer in self.layers:
             data = layer.forward(data)
+            if self.optimizer.regularizer is not None:
+                reg_loss += self.optimizer.regularizer.norm(layer.weights)
         return self.loss_layer.forward(data, copy.deepcopy(self.label_tensor))
     def backward(self):
         y = copy.deepcopy(self.label_tensor)
