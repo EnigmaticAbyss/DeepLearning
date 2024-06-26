@@ -1,11 +1,11 @@
 import numpy as np
 from scipy import signal
-from Layers import Base
+from Layers.Base import BaseLayer
 from scipy.signal import correlate2d, convolve2d
 import copy
 from enum import Enum
 
-class Conv(Base.BaseLayer):
+class Conv(BaseLayer):
     def __init__(self, stride_shape, convolution_shape, num_kernels:int):
         self.trainable = True
         # Handle stride_shape
