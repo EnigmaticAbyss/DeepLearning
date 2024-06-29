@@ -1,5 +1,12 @@
 import copy
 import numpy as np
+def save(filename, net):
+    pickle.dump(net, open(filename, 'wb'))
+
+def load(filename, data_layer):
+    net = pickle.load(open(filename, 'rb'))
+    net.data_layer = data_layer
+    return net
 class NeuralNetwork:
     def __init__(self, optimizer,weight_init,bias_init):
         self.optimizer=optimizer
@@ -31,7 +38,13 @@ class NeuralNetwork:
             self.loss.append(self.forward()) # calculate the froward pass for loss
             self.backward()
             
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['data_layer']
+        return state
     
+    def __setstate__(self, state):
+        self.__dict__ = state
     def test(self,input_tensor):
         self.phase='test'
         for layer in self.layers:
