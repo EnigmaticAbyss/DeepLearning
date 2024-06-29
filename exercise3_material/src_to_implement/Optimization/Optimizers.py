@@ -5,11 +5,6 @@
 import numpy as np
 import copy
 
-def PruningWeight_tensor(weight_tensor):
-    if type(weight_tensor) is not np.ndarray:
-        return weight_tensor
-    return weight_tensor.copy()
-    
 
 class Optimizer:
 
