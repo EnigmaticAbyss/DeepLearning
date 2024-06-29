@@ -19,10 +19,6 @@ class Optimizer:
         self.regularizer = None
     def add_regularizer(self, regularizer):
         self.regularizer = regularizer
-    def pruningWeight_tensor(self,weight_tensor):
-        if type(weight_tensor) is not np.ndarray:
-            return weight_tensor
-        return weight_tensor.copy()
 class Sgd(Optimizer):
     
 
@@ -38,15 +34,6 @@ class Sgd(Optimizer):
         if self.regularizer is not None:
             weight_tensor -= self.learning_rate * self.regularizer.calculate_gradient(originalWeight) 
         return weight_tensor
-
-
-        # updated_weights = weight_tensor - self.learning_rate * gradient_tensor
-        # if self.regularizer is not None:
-        #     updated_weights = updated_weights- self.learning_rate * self.regularizer.calculate_gradient(self.pruningWeight_tensor(weight_tensor)) 
-
-        # return updated_weights
-
-
 class SgdWithMomentum(Optimizer):
 
 
