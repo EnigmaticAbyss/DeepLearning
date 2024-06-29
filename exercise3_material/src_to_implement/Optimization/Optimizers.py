@@ -3,6 +3,7 @@
 
 
 import numpy as np
+import copy
 
 def PruningWeight_tensor(weight_tensor):
     if type(weight_tensor) is not np.ndarray:
@@ -32,13 +33,18 @@ class Sgd(Optimizer):
 
 
     def  calculate_update(self, weight_tensor, gradient_tensor):
-        
-
-        updated_weights = weight_tensor - self.learning_rate * gradient_tensor
+        originalWeight=copy.deepcopy(weight_tensor)
+        weight_tensor -=  self.learning_rate * gradient_tensor
         if self.regularizer is not None:
-            updated_weights = updated_weights- self.learning_rate * self.regularizer.calculate_gradient(self.pruningWeight_tensor(weight_tensor)) 
+            weight_tensor -= self.learning_rate * self.regularizer.calculate_gradient(originalWeight) 
+        return weight_tensor
 
-        return updated_weights
+
+        # updated_weights = weight_tensor - self.learning_rate * gradient_tensor
+        # if self.regularizer is not None:
+        #     updated_weights = updated_weights- self.learning_rate * self.regularizer.calculate_gradient(self.pruningWeight_tensor(weight_tensor)) 
+
+        # return updated_weights
 
 
 class SgdWithMomentum(Optimizer):
@@ -58,7 +64,7 @@ class SgdWithMomentum(Optimizer):
 
         self.vn_1= (self.momentum_rate* self.vn_1) - (self.learning_rate* gradient_tensor)
         if self.regularizer is not None:
-            weight_tensor = weight_tensor- self.learning_rate * self.regularizer.calculate_gradient(self.pruningWeight_tensor(weight_tensor)) 
+            weight_tensor -= self.learning_rate * self.regularizer.calculate_gradient(weight_tensor) 
 
 
 
@@ -114,11 +120,11 @@ class Adam(Optimizer):
         r_hat = self.r / (1 - np.power(self.rho, self.k))
 
 
-
+        originalWeight=copy.deepcopy(weight_tensor)
         self.k += 1
-        updated_weights = weight_tensor- self.learning_rate * (v_hat / (np.sqrt(r_hat) + np.finfo(float).eps))
+        weight_tensor-= self.learning_rate * (v_hat / (np.sqrt(r_hat) + np.finfo(float).eps))
         if self.regularizer is not None:
-            updated_weights = updated_weights- self.learning_rate * self.regularizer.calculate_gradient(self.pruningWeight_tensor(weight_tensor)) 
+             weight_tensor-= self.learning_rate * self.regularizer.calculate_gradient(originalWeight) 
 
 
-        return updated_weights
+        return weight_tensor
