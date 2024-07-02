@@ -12,16 +12,19 @@ class NeuralNetwork:
         self.optimizer=optimizer
         self.weight_init=weight_init
         self.bias_init=bias_init
+        self._phase=None
         self.loss=[]
         self.layers=[]
         
     def forward(self):
         data, self.label_tensor = copy.deepcopy(self.data_layer.next())
+        regLoss=0
         for layer in self.layers:
+            layer.testing_phase = False
             data = layer.forward(data)
-            if self.optimizer.regularizer is not None:
-                reg_loss += self.optimizer.regularizer.norm(layer.weights)
-        return self.loss_layer.forward(data, copy.deepcopy(self.label_tensor))
+            if self.optimizer.regularizer is not None and layer.weights is not None:
+                regLoss += self.optimizer.regularizer.norm(layer.weights)
+        return (self.loss_layer.forward(data, copy.deepcopy(self.label_tensor)))+ regLoss
     def backward(self):
         y = copy.deepcopy(self.label_tensor)
         y = self.loss_layer.backward(y)
@@ -29,7 +32,7 @@ class NeuralNetwork:
             y = layer.backward(y)
     def append_layer(self,layer):
         if layer.trainable:
-            layer.initialize(self.weight_init, self.bias_init)
+            layer.initialize(copy.deepcopy(self.weight_init),copy.deepcopy( self.bias_init))
             layer.optimizer =copy.deepcopy(self.optimizer)
         self.layers.append(layer)
     def train(self,iterations):
@@ -48,6 +51,7 @@ class NeuralNetwork:
     def test(self,input_tensor):
         self.phase='test'
         for layer in self.layers:
+            layer.testing_phase=True
             input_tensor=layer.forward(input_tensor)
         return input_tensor
     
