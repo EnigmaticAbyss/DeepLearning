@@ -1,6 +1,6 @@
 import numpy as np
 from Layers.Base import BaseLayer
-
+import copy
 
 class RNN(BaseLayer):
     def __init__(self, input_size, hidden_size, output_size):
@@ -9,7 +9,7 @@ class RNN(BaseLayer):
         self.hidden_size = hidden_size
         self.output_size = output_size
         self._memorize = False
-        self.weights = self.FC_h.weights
+        self.weights = None
         self.optimizer = None
     
     @property
