@@ -14,4 +14,11 @@ class Xavier():
 class He():
     def initialize(self,weights_shape,fan_in,fan_out):
         sigmoid=np.sqrt(2/fan_in)
+        
+        if isinstance(weights_shape, int):
+            weights_shape = (weights_shape,)
         return np.random.randn(*weights_shape)*sigmoid
+
+    
+    
+    
