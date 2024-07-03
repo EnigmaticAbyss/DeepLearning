@@ -20,5 +20,4 @@ class He():
         return np.random.randn(*weights_shape)*sigmoid
 
     
-    
-    
+   

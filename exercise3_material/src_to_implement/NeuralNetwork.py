@@ -1,5 +1,7 @@
 import copy
 import numpy as np
+import pickle
+
 def save(filename, net):
     pickle.dump(net, open(filename, 'wb'))
 
