@@ -131,7 +131,7 @@ class RNN(BaseLayer):
     
             # gradient of copy procedure is like doing a sum the green part
             hidden_state = self.output_layer.backward(y_t) + gradient_previous_hidden
-            #first gradient
+            #first gradient for output function (red part)
             output_gradient_weights += self.output_layer.gradient_weights
             #second part
             # TanH: activation = input for output layer this one is infact the hidden state info previously saved
