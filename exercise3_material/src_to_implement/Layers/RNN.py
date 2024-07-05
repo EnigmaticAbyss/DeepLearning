@@ -28,8 +28,8 @@ class RNN(BaseLayer):
 
         self._optimizer = None
         # gradient layer weight differ at every time step 
-        #gradient weight is the sum of all times
-        #here the refrence put that specific hidden layer gradient to whole rnn to add others in future
+ 
+        #here it is only a refrencing to whole rnn
         self._gradient_weights = self.hidden_layer.gradient_weights
         self._weights = None
         
