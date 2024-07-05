@@ -7,7 +7,7 @@ from Layers.Base import BaseLayer
 from Layers.FullyConnected import FullyConnected
 from Layers.TanH import TanH
 from Layers.Sigmoid import Sigmoid
-
+import copy
 # Elman cell implementation
 
 
@@ -93,9 +93,8 @@ class RNN(BaseLayer):
             self.hidden_input_prevc_store[t] = self.hidden_layer.input_store
 
             h_t = self.tanh.forward(h_t)
-            hidden_previous = h_t
-            self.hidden_state_next_store[t] = h_t
-
+            self.hidden_state_next_store[t] = copy.deepcopy(h_t)
+            hidden_previous = copy.deepcopy(h_t)
             sigmoid_input = self.output_layer.forward(h_t)
 
             output_tensor[t] = self.sigmoid.forward(sigmoid_input)  # y_t
