@@ -121,6 +121,7 @@ class RNN(BaseLayer):
             # Output layer
             tmp = self.hidden_state_next_store[t][np.newaxis, :]
             # bias needs to be added: this is the method we choosed so that in backwar for haviing correct layer must be with ones
+            # as you know the connected layer will not remove the bias so we have to add it to make it compatible with our connected layer
             tmp_with_ones = np.ones((tmp.shape[0], tmp.shape[1] + 1))
             tmp_with_ones[:, :-1] = tmp
             
@@ -166,15 +167,6 @@ class RNN(BaseLayer):
             self.weights = self._optimizer.calculate_update(self.weights, self._gradient_weights)
             self.output_layer.weights = self._optimizer.calculate_update(self.output_layer.weights, output_gradient_weights)
         return error_tensor_previous
-
-    # def calculate_regularization_loss(self):
-    #     # as in forward in neural network
-    #     # define calculate_regularization_loss in BaseLayer to integrate into forward pass of NN?
-    #     reg_loss = 0
-    #     if self._optimizer.regularizer:
-    #         reg_loss += self._optimizer.regularizer.norm(self.hidden_layer.weights)
-    #         reg_loss += self._optimizer.regularizer.norm(self.output_layer.weights)
-    #     return reg_loss
 
 
     @property
