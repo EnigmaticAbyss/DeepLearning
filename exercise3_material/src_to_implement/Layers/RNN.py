@@ -34,7 +34,7 @@ class RNN(BaseLayer):
         self._weights = None
         
         self.trainable = True
-        self.hidden_state_next_store = None  # store h_t  it is required for backward pass outputs layer this is after tanh
+        self.hidden_state_next_store = None  # store h_t  it is required for backward pass outputs layer this is after tanh so will be used for tanh
         self.hidden_input_prevc_store = None  # here bothe the previous h_t-1 and input layer yet the bias is  added  
         self.sigmoid_activation_store = None # sigmoid at each time, used for backward calculating gradient for output layer final output with bias in it
 
@@ -124,21 +124,21 @@ class RNN(BaseLayer):
             tmp_with_ones = np.ones((tmp.shape[0], tmp.shape[1] + 1))
             tmp_with_ones[:, :-1] = tmp
             
-            # we should consider that in backwar we use the 
+            # we should consider that in backwar we use the ones in our hidden layer hear we need ones for back to work
             self.output_layer.input_store = tmp_with_ones
 
             # self.output_layer.input_store = np.concatenate((tmp, np.ones((1, 1))), axis=1)
             # gradient of copy procedure is like doing a sum the green part
             hidden_state = self.output_layer.backward(y_t) + gradient_previous_hidden
-
+            #first gradient
             output_gradient_weights += self.output_layer.gradient_weights
-
+            #second part
             # TanH: activation = input for output layer this one is infact the hidden state info previously saved
             self.tanh.activation_store = self.hidden_state_next_store[t][np.newaxis, :]
             tanh_input_de = self.tanh.backward(hidden_state)
 
             # Hidden layer
-            #here we add the input of 
+            #here we add the input that is saved, remember our alghoritm uses the input with bias combined for calculating the backprop
             self.hidden_layer.input_store = self.hidden_input_prevc_store[t][np.newaxis, :]
             h_x = self.hidden_layer.backward(tanh_input_de)  # get stacked hidden state and input
             
