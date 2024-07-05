@@ -71,17 +71,19 @@ class RNN(BaseLayer):
             
         time = input_tensor.shape[0]
         output_tensor = np.zeros((time, self.output_size))
-        self.hidden_input_prevc_store = np.zeros((time, self.hidden_size + self.input_size + 1))# size of combine and bias
         self.hidden_state_next_store = np.zeros((time, self.hidden_size))
         self.sigmoid_activation_store = np.zeros((time, self.output_size))
+        self.hidden_input_prevc_store = np.zeros((time, self.hidden_size + self.input_size + 1))# size of combine and bias
+
         # forward pass through time
         for t in range(time):
             # get current input
             # (inpput_size,)
-            x_t = input_tensor[t][np.newaxis, :]  # shape: (1, input_size)
+            x_t = input_tensor[t].reshape(1, -1)  # shape: (1, input_size)
             # use as batch with one element
             # input to hidden_layer: 1 x (hidden_size + input_size) this is without bias
-            input_hidden = np.concatenate((hidden_previous, x_t), axis=1)
+            input_hidden = np.hstack((hidden_previous, x_t))
+
             h_t = self.hidden_layer.forward(input_hidden)
             # this is after the adding of bias
             self.hidden_input_prevc_store[t] = self.hidden_layer.input_store
@@ -114,8 +116,8 @@ class RNN(BaseLayer):
             
             self.sigmoid.activation_store = self.sigmoid_activation_store[t][np.newaxis, :]
             
-            # do oposite of sigmoid to get the without sigmoid y_t
-            y_t = self.sigmoid.backward(error_tensor[t][np.newaxis, :])
+            # do oposite of sigmoid to get the without sigmoid y_t, since backprop removes the bias itself its fine
+            y_t_de = self.sigmoid.backward(error_tensor[t][np.newaxis, :])
 
         
             # Output layer
@@ -130,7 +132,7 @@ class RNN(BaseLayer):
 
     
             # gradient of copy procedure is like doing a sum the green part
-            hidden_state = self.output_layer.backward(y_t) + gradient_previous_hidden
+            hidden_state = self.output_layer.backward(y_t_de) + gradient_previous_hidden
             #first gradient for output function (red part)
             output_gradient_weights += self.output_layer.gradient_weights
             #second part
