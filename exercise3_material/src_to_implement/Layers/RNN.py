@@ -179,6 +179,9 @@ class RNN(BaseLayer):
         
     
     @weights.setter
+    # self._weights and self.hidden_layer.weights is always the same
+    def weights(self, value):
+        self.hidden_layer.weights = value
     @property
     def optimizer(self):
         return self._optimizer
@@ -187,9 +190,7 @@ class RNN(BaseLayer):
     def optimizer(self, value):
         self._optimizer = value
 
-    # self._weights and self.hidden_layer.weights is always the same
-    def weights(self, value):
-        self.hidden_layer.weights = value
+
 
     def initialize(self, weights_initializer, bias_initializer):
         # re-initialize weights
