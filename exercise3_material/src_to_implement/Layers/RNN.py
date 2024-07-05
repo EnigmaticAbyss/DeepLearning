@@ -34,18 +34,12 @@ class RNN(BaseLayer):
         self._weights = None
         
         self.trainable = True
-        self.hidden_state_store = None  # store h_t  it is required for backward pass outputs layer this is after tanh
-        self.hidden_input_store = None  # here bothe the previous h_t-1 and input layer yet the bias is  added  
-        self.sigmoid_activation_store = None # sigmoid at each time, used for backward calculating gradient for output layer
+        self.hidden_state_next_store = None  # store h_t  it is required for backward pass outputs layer this is after tanh
+        self.hidden_input_prevc_store = None  # here bothe the previous h_t-1 and input layer yet the bias is  added  
+        self.sigmoid_activation_store = None # sigmoid at each time, used for backward calculating gradient for output layer final output with bias in it
 
 
-    @property
-    def optimizer(self):
-        return self._optimizer
 
-    @optimizer.setter
-    def optimizer(self, value):
-        self._optimizer = value
 
     @property
     def gradient_weights(self):  # getter
@@ -77,8 +71,8 @@ class RNN(BaseLayer):
             
         time = input_tensor.shape[0]
         output_tensor = np.zeros((time, self.output_size))
-        self.hidden_input_store = np.zeros((time, self.hidden_size + self.input_size + 1))# size of combine and bias
-        self.hidden_state_store = np.zeros((time, self.hidden_size))
+        self.hidden_input_prevc_store = np.zeros((time, self.hidden_size + self.input_size + 1))# size of combine and bias
+        self.hidden_state_next_store = np.zeros((time, self.hidden_size))
         self.sigmoid_activation_store = np.zeros((time, self.output_size))
         # forward pass through time
         for t in range(time):
@@ -90,20 +84,21 @@ class RNN(BaseLayer):
             input_hidden = np.concatenate((hidden_previous, x_t), axis=1)
             h_t = self.hidden_layer.forward(input_hidden)
             # this is after the adding of bias
-            self.hidden_input_store[t] = self.hidden_layer.input_store
+            self.hidden_input_prevc_store[t] = self.hidden_layer.input_store
 
             h_t = self.tanh.forward(h_t)
             hidden_previous = h_t
-            self.hidden_state_store[t] = h_t
+            self.hidden_state_next_store[t] = h_t
 
             sigmoid_input = self.output_layer.forward(h_t)
 
             output_tensor[t] = self.sigmoid.forward(sigmoid_input)  # y_t
+            #this one has bias and output
             self.sigmoid_activation_store[t] = output_tensor[t]
             
             
             
-        self.hidden_state = self.hidden_state_store[time-1][np.newaxis, :]
+        self.hidden_state = self.hidden_state_next_store[time-1][np.newaxis, :]
         return output_tensor
 
     def backward(self, error_tensor):
@@ -124,7 +119,7 @@ class RNN(BaseLayer):
 
         
             # Output layer
-            tmp = self.hidden_state_store[t][np.newaxis, :]
+            tmp = self.hidden_state_next_store[t][np.newaxis, :]
             # bias needs to be added: this is the method we choosed so that in backwar for haviing correct layer must be with ones
             tmp_with_ones = np.ones((tmp.shape[0], tmp.shape[1] + 1))
             tmp_with_ones[:, :-1] = tmp
@@ -139,12 +134,12 @@ class RNN(BaseLayer):
             output_gradient_weights += self.output_layer.gradient_weights
 
             # TanH: activation = input for output layer this one is infact the hidden state info previously saved
-            self.tanh.activation_store = self.hidden_state_store[t][np.newaxis, :]
+            self.tanh.activation_store = self.hidden_state_next_store[t][np.newaxis, :]
             tanh_input_de = self.tanh.backward(hidden_state)
 
             # Hidden layer
             #here we add the input of 
-            self.hidden_layer.input_store = self.hidden_input_store[t][np.newaxis, :]
+            self.hidden_layer.input_store = self.hidden_input_prevc_store[t][np.newaxis, :]
             h_x = self.hidden_layer.backward(tanh_input_de)  # get stacked hidden state and input
             
             
@@ -191,6 +186,13 @@ class RNN(BaseLayer):
         
     
     @weights.setter
+    @property
+    def optimizer(self):
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, value):
+        self._optimizer = value
 
     # self._weights and self.hidden_layer.weights is always the same
     def weights(self, value):
