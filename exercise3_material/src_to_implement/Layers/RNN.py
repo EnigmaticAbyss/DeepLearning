@@ -16,7 +16,7 @@ class RNN(BaseLayer):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
-        self.hidden_state = np.zeros((1, self.hidden_size))
+        self.hidden_status = np.zeros((1, self.hidden_size))
         # whether to regard subsequent sequences belonging to the same long sequence or not so we can see if there is a previous cell or not
         self._memorize = False
         # this is the  out put of first part in cell: Fully connected layer containing Whh and Wxh and bh  first part for tanh
@@ -65,19 +65,19 @@ class RNN(BaseLayer):
         if not self._memorize:  # first hidden state
             hidden_previous = np.zeros((1, self.hidden_size))
         else:
-            hidden_previous = self.hidden_state  # restore state from previous iteration
+            hidden_previous = self.hidden_status  # restore state from previous iteration if it was in a sequence
             
             
             
         time = input_tensor.shape[0]
         
         self.hidden_state_next_store = np.zeros((time, self.hidden_size))
-        self.sigmoid_activation_store = np.zeros((time, self.output_size))
+    
         self.hidden_input_prevc_store = np.zeros((time, self.hidden_size + self.input_size + 1))# size of combine and bias
         output_tensor = np.zeros((time, self.output_size))
-        
+        self.sigmoid_activation_store = np.zeros((time, self.output_size))
         #for backward comming state
-        self.hidden_state = self.hidden_state_next_store[time-1].reshape(1, -1)     
+        self.hidden_status = self.hidden_state_next_store[time-1].reshape(1, -1)     
 
         # forward pass through time
         for t in range(time):
@@ -86,9 +86,9 @@ class RNN(BaseLayer):
             x_t = input_tensor[t].reshape(1, -1)  # shape: (1, input_size)
             # use as batch with one element
             # input to hidden_layer: (hidden_size + input_size) this is without bias
-            input_hidden = np.hstack((hidden_previous, x_t))
+            input_hidden_combined = np.hstack((hidden_previous, x_t))
 
-            h_t = self.hidden_layer.forward(input_hidden)
+            h_t = self.hidden_layer.forward(input_hidden_combined)
             # this is after the adding of bias
             self.hidden_input_prevc_store[t] = self.hidden_layer.input_store
 
@@ -136,13 +136,13 @@ class RNN(BaseLayer):
 
     
             # gradient of copy procedure is like doing a sum the green part
-            hidden_state = self.output_layer.backward(y_t_de) + gradient_previous_hidden
+            hidden_state_copy = self.output_layer.backward(y_t_de) + gradient_previous_hidden
             #first gradient for output function (red part)
             output_gradient_weights += self.output_layer.gradient_weights
             #second part
             # TanH: activation = input for output layer this one is infact the hidden state info previously saved
             self.tanh.activation_store = self.hidden_state_next_store[t].reshape(1, -1)
-            tanh_input_de = self.tanh.backward(hidden_state)
+            tanh_input_de = self.tanh.backward(hidden_state_copy)
 
             # Hidden layer
             #here we add the input that is saved, remember our alghoritm uses the input with bias combined for calculating the backprop
