@@ -17,7 +17,7 @@ class RNN(BaseLayer):
         self.hidden_size = hidden_size
         self.output_size = output_size
         self.hidden_state = np.zeros((1, self.hidden_size))
-        # whether to regard subsequent sequences belonging to the same long sequence or not
+        # whether to regard subsequent sequences belonging to the same long sequence or not so we can see if there is a previous cell or not
         self._memorize = False
         # this is the  out put of first part in cell: Fully connected layer containing Whh and Wxh and bh
         self.hidden_layer = FullyConnected(input_size + hidden_size, hidden_size)
@@ -145,7 +145,8 @@ class RNN(BaseLayer):
             
             #sperating the two elements of input and hx
             
-            # this one is the gradient for the ht-1
+            # this one is the gradient for the ht-1 so that to be passed for the previous one
+            #remember this one is just passed  in this state  it doesn't do anything since it is not a part of a layer
             gradient_previous_hidden = h_x[:, :self.hidden_size]
             
             # this one is the error tensor back
@@ -160,7 +161,7 @@ class RNN(BaseLayer):
             
             
         # update weights after backward pass is finished
-        # (such that the weights stay the same until one time sequence is finished)
+        # both the layers are being updated hidden and output
         if self._optimizer:
             self.weights = self._optimizer.calculate_update(self.weights, self._gradient_weights)
             self.output_layer.weights = self._optimizer.calculate_update(self.output_layer.weights, output_gradient_weights)
