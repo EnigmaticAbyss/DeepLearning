@@ -19,9 +19,9 @@ class RNN(BaseLayer):
         self.hidden_state = np.zeros((1, self.hidden_size))
         # whether to regard subsequent sequences belonging to the same long sequence or not so we can see if there is a previous cell or not
         self._memorize = False
-        # this is the  out put of first part in cell: Fully connected layer containing Whh and Wxh and bh
+        # this is the  out put of first part in cell: Fully connected layer containing Whh and Wxh and bh  first part for tanh
         self.hidden_layer = FullyConnected(input_size + hidden_size, hidden_size)
-        #  this is the the out put yt Why and by
+        #  this is the the out put yt Why and by second part for sigmoid
         self.output_layer = FullyConnected(hidden_size, output_size)
         self.tanh = TanH()
         self.sigmoid = Sigmoid()
@@ -85,7 +85,7 @@ class RNN(BaseLayer):
             # (inpput_size,)
             x_t = input_tensor[t].reshape(1, -1)  # shape: (1, input_size)
             # use as batch with one element
-            # input to hidden_layer: 1 x (hidden_size + input_size) this is without bias
+            # input to hidden_layer: (hidden_size + input_size) this is without bias
             input_hidden = np.hstack((hidden_previous, x_t))
 
             h_t = self.hidden_layer.forward(input_hidden)
