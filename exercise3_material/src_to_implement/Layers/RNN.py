@@ -128,7 +128,7 @@ class RNN(BaseLayer):
             # we should consider that in backwar we use the ones in our hidden layer hear we need ones for back to work
             self.output_layer.input_store = tmp_with_ones
 
-            # self.output_layer.input_store = np.concatenate((tmp, np.ones((1, 1))), axis=1)
+    
             # gradient of copy procedure is like doing a sum the green part
             hidden_state = self.output_layer.backward(y_t) + gradient_previous_hidden
             #first gradient
