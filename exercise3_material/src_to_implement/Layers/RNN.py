@@ -70,18 +70,24 @@ class RNN(BaseLayer):
             
             
         time = input_tensor.shape[0]
-        output_tensor = np.zeros((time, self.output_size))
-        self.hidden_input_prevc_store = np.zeros((time, self.hidden_size + self.input_size + 1))# size of combine and bias
+        
         self.hidden_state_next_store = np.zeros((time, self.hidden_size))
         self.sigmoid_activation_store = np.zeros((time, self.output_size))
+        self.hidden_input_prevc_store = np.zeros((time, self.hidden_size + self.input_size + 1))# size of combine and bias
+        output_tensor = np.zeros((time, self.output_size))
+        
+        #for backward comming state
+        self.hidden_state = self.hidden_state_next_store[time-1].reshape(1, -1)     
+
         # forward pass through time
         for t in range(time):
             # get current input
             # (inpput_size,)
-            x_t = input_tensor[t][np.newaxis, :]  # shape: (1, input_size)
+            x_t = input_tensor[t].reshape(1, -1)  # shape: (1, input_size)
             # use as batch with one element
             # input to hidden_layer: 1 x (hidden_size + input_size) this is without bias
-            input_hidden = np.concatenate((hidden_previous, x_t), axis=1)
+            input_hidden = np.hstack((hidden_previous, x_t))
+
             h_t = self.hidden_layer.forward(input_hidden)
             # this is after the adding of bias
             self.hidden_input_prevc_store[t] = self.hidden_layer.input_store
@@ -97,7 +103,7 @@ class RNN(BaseLayer):
             
             
             
-        self.hidden_state = self.hidden_state_next_store[time-1][np.newaxis, :]
+  
         return output_tensor
 
     def backward(self, error_tensor):
@@ -111,14 +117,15 @@ class RNN(BaseLayer):
         for t in reversed(range(time)):
             # Sigmoid here we get the error tensor of sigmoid
             
-            self.sigmoid.activation_store = self.sigmoid_activation_store[t][np.newaxis, :]
+            self.sigmoid.activation_store = self.sigmoid_activation_store[t].reshape(1, -1)
             
-            # do oposite of sigmoid to get the without sigmoid y_t
-            y_t = self.sigmoid.backward(error_tensor[t][np.newaxis, :])
+
+            # do oposite of sigmoid to get the without sigmoid y_t, since backprop removes the bias itself its fine
+            y_t_de = self.sigmoid.backward(error_tensor[t].reshape(1, -1))
 
         
             # Output layer
-            tmp = self.hidden_state_next_store[t][np.newaxis, :]
+            tmp = self.hidden_state_next_store[t].reshape(1, -1)
             # bias needs to be added: this is the method we choosed so that in backwar for haviing correct layer must be with ones
             # as you know the connected layer will not remove the bias so we have to add it to make it compatible with our connected layer
             tmp_with_ones = np.ones((tmp.shape[0], tmp.shape[1] + 1))
@@ -129,17 +136,19 @@ class RNN(BaseLayer):
 
     
             # gradient of copy procedure is like doing a sum the green part
-            hidden_state = self.output_layer.backward(y_t) + gradient_previous_hidden
+            hidden_state = self.output_layer.backward(y_t_de) + gradient_previous_hidden
             #first gradient for output function (red part)
             output_gradient_weights += self.output_layer.gradient_weights
             #second part
             # TanH: activation = input for output layer this one is infact the hidden state info previously saved
-            self.tanh.activation_store = self.hidden_state_next_store[t][np.newaxis, :]
+            self.tanh.activation_store = self.hidden_state_next_store[t].reshape(1, -1)
             tanh_input_de = self.tanh.backward(hidden_state)
 
             # Hidden layer
             #here we add the input that is saved, remember our alghoritm uses the input with bias combined for calculating the backprop
-            self.hidden_layer.input_store = self.hidden_input_prevc_store[t][np.newaxis, :]
+ 
+            self.hidden_layer.input_store = self.hidden_input_prevc_store[t].reshape(1, -1)
+
             h_x = self.hidden_layer.backward(tanh_input_de)  # get stacked hidden state and input
             
             
