@@ -8,7 +8,7 @@ from Layers.FullyConnected import FullyConnected
 from Layers.TanH import TanH
 from Layers.Sigmoid import Sigmoid
 import copy
-# Elman cell implementation
+
 
 
 class RNN(BaseLayer):
