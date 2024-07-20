@@ -24,7 +24,7 @@ class ChallengeDataset(Dataset):
         else:  # mode == 'val'
             self.transform = tv.transforms.Compose([
                 tv.transforms.ToPILImage(),
-                tv.transforms.ToTensor(),
+                tv.transforms.ToTensor()  ,
                 tv.transforms.Normalize(mean=train_mean, std=train_std),
             ])
         
@@ -35,6 +35,7 @@ class ChallengeDataset(Dataset):
         # Get image path and label from the dataframe
         img_path = self.data.iloc[index, 0]
         label = self.data.iloc[index, 1]
+        label2 = self.data.iloc[index, 2]
         
         # Read image and convert to RGB
         image = imread(img_path)
@@ -47,6 +48,6 @@ class ChallengeDataset(Dataset):
             image = self.transform(image)
         
         # Convert label to tensor
-        label = torch.tensor(label, dtype=torch.long)
-        
+        label = torch.tensor((label,label2), dtype=torch.long)
+         
         return image, label

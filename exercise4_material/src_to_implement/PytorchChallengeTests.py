@@ -50,13 +50,17 @@ class TestDataset(unittest.TestCase):
         from data import ChallengeDataset
 
         val_dl = t.utils.data.DataLoader(ChallengeDataset(self.tab, 'val'), batch_size=1)
+  
         for x, y in val_dl:
+            
+       
             x = x[0].cpu().numpy()
             self.assertEqual(x.shape[0], 3, 'Make sure that your images are converted to RGB. On the "__getitem__" function use the respective skimage function (for further information check the Description.pdf file)')
             self.assertEqual(x.shape[1], 300, 'Your samples are not correctly shaped')
             self.assertEqual(x.shape[2], 300, 'Your samples are not correctly shaped')
 
             y = y[0].cpu().numpy()
+    
             self.assertEqual(y.size, 2)
 
             break
