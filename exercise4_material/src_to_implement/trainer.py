@@ -1,5 +1,5 @@
 
-                    
+import os                    
 import torch as t
 from sklearn.metrics import f1_score
 from tqdm.autonotebook import tqdm
@@ -31,7 +31,12 @@ class Trainer:
             
     def save_checkpoint(self, epoch):
         t.save({'state_dict': self._model.state_dict()}, 'checkpoints/checkpoint_{:03d}.ckp'.format(epoch))
+    def save_checkpoint(self, epoch):
+        if not os.path.exists("checkpoints"):
+            os.mkdir("checkpoints")
+        t.save({'state_dict': self._model.state_dict()}, 'checkpoints/checkpoint_{:03d}.ckp'.format(epoch))
     
+
     def restore_checkpoint(self, epoch_n):
         ckp = t.load('checkpoints/checkpoint_{:03d}.ckp'.format(epoch_n), map_location='cuda' if self._cuda else None)
         self._model.load_state_dict(ckp['state_dict'])
@@ -92,14 +97,22 @@ class Trainer:
                 x, y = batch
                 loss, preds = self.val_test_step(x, y)
                 running_loss += loss
+                preds = preds.round()
                 all_preds.append(preds.cpu())
                 all_labels.append(y.cpu())
         avg_loss = running_loss / len(self._val_test_dl)
+   
         all_preds = t.cat(all_preds)
+
         all_labels = t.cat(all_labels)
-        f1 = f1_score(all_labels, all_preds.argmax(dim=1), average='weighted')
-        print(f"Validation Loss: {avg_loss}, F1 Score: {f1}")
-        return avg_loss, f1
+    
+        F1_crack = f1_score(all_labels[:, 0].cpu(), all_preds[:, 0].cpu(), average='binary')
+        F1_inactive = f1_score(all_labels[:, 1].cpu(), all_preds[:, 1].cpu(), average='binary')
+        F1_mean = (F1_crack + F1_inactive) / 2
+       
+
+        print(f"Validation Loss: {avg_loss}, F1 Score: {F1_mean}")
+        return avg_loss, F1_mean
     
     def fit(self, epochs=-1):
         assert self._early_stopping_patience > 0 or epochs > 0
