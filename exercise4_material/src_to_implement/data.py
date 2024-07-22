@@ -34,16 +34,9 @@ class ChallengeDataset(Dataset):
     def __getitem__(self, index):
         # Get image path and label from the dataframe
         img_path = self.data.iloc[index, 0]
-        # label1= self.data.iloc[index,1]
-        # label2 = self.data.iloc[index, 2]
-        # label = torch.tensor(self.data.iloc[index, 1:]).int()
+
         label = torch.tensor(self.data.iloc[index, 1:].tolist()).float()
-      
-        # print("1dfs")
-        # print(label)
-        # print("2fdsf")
-        # print(img_path)
-        # print("3sdfsdf")
+
         # Read image and convert to RGB
         image = imread(img_path)
         if image.ndim == 2:  # if grayscale
@@ -55,6 +48,7 @@ class ChallengeDataset(Dataset):
             image = self.transform(image)
         
         # Convert label to tensor
-        label = torch.tensor(label, dtype=torch.float)
+        label  = label.clone().detach().float()
+
         
         return image, label
