@@ -57,7 +57,9 @@ class Trainer:
         x = x.cuda() if self._cuda else x
         y = y.cuda() if self._cuda else y
         output = self._model(x)  # propagate through the network
+   
         loss = self._crit(output, y)  # calculate the loss
+    
         loss.backward()  # compute gradient by backward propagation
         self._optim.step()  # update weights
         return loss.item()
@@ -66,6 +68,7 @@ class Trainer:
         x = x.cuda() if self._cuda else x
         y = y.cuda() if self._cuda else y
         output = self._model(x)
+
         loss = self._crit(output, y)
         return loss.item(), output
     
