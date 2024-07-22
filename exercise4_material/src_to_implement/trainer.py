@@ -106,10 +106,10 @@ class Trainer:
 
         all_labels = t.cat(all_labels)
     
-        F1_crack = f1_score(all_labels[:, 0].cpu(), all_preds[:, 0].cpu(), average='binary')
-        F1_inactive = f1_score(all_labels[:, 1].cpu(), all_preds[:, 1].cpu(), average='binary')
-        F1_mean = (F1_crack + F1_inactive) / 2
-       
+        # F1_crack = f1_score(all_labels[:, 0].cpu(), all_preds[:, 0].cpu(), average='binary')
+        # # F1_inactive = f1_score(all_labels[:, 1].cpu(), all_preds[:, 1].cpu(), average='binary')
+        # F1_mean = (F1_crack + F1_inactive) / 2
+        F1_mean = f1_score(all_labels.cpu(), all_preds.cpu(), average='weighted')
 
         print(f"Validation Loss: {avg_loss}, F1 Score: {F1_mean}")
         return avg_loss, F1_mean
