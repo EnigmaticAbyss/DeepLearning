@@ -35,7 +35,7 @@ class ChallengeDataset(Dataset):
         # Get image path and label from the dataframe
         img_path = self.data.iloc[index, 0]
 
-        label = torch.tensor(self.data.iloc[index, 1:].tolist()).float()
+        label = torch.tensor(self.data.iloc[index, 1:].tolist()).int()
 
         # Read image and convert to RGB
         image = imread(img_path)
