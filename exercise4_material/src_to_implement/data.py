@@ -14,13 +14,16 @@ class ChallengeDataset(Dataset):
         self.data = data
         self.mode = mode
       
-
+# transforms on train data obviously no change to labels!
         if self.mode == 'train':
             self.transform = tv.transforms.Compose([
                 tv.transforms.ToPILImage(),
+                tv.transforms.RandomHorizontalFlip(),
+                    tv.transforms.RandomRotation(8),
                 tv.transforms.ToTensor(),
                 tv.transforms.Normalize(mean=train_mean, std=train_std),
             ])
+            # transform on test data, Not to change data form a lot since should be consistent with natural data
         else:  # mode == 'val'
             self.transform = tv.transforms.Compose([
                 tv.transforms.ToPILImage(),
@@ -34,7 +37,7 @@ class ChallengeDataset(Dataset):
     def __getitem__(self, index):
         # Get image path and label from the dataframe
         img_path = self.data.iloc[index, 0]
-
+        # couple of labels thus a list
         label = torch.tensor(self.data.iloc[index, 1:].tolist()).int()
 
         # Read image and convert to RGB
