@@ -21,17 +21,28 @@ class Trainer:
         self._model = model
         self._crit = crit if crit else t.nn.BCEWithLogitsLoss()  # Use BCEWithLogitsLoss for multi-label classification
         self._optim = optim
-        self._train_dl = train_dl
-        self._val_test_dl = val_test_dl
-        self._cuda = cuda
-
-        self._early_stopping_patience = early_stopping_patience
-        self._best_val_loss = float('inf')
-        self._epochs_no_improve = 0
-
         if cuda:
             self._model = model.cuda()
             self._crit = self._crit.cuda()
+
+        self.early_stop_num = early_stopping_patience
+        self._best_val_loss = float('inf')
+        self.epochs_number_imp = 0
+        self.train_data = train_dl
+        self.validate_test_data = val_test_dl
+        self.cuda_status = cuda
+        
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
             
     def save_checkpoint(self, epoch):
         if not os.path.exists("checkpoints"):
@@ -42,7 +53,7 @@ class Trainer:
  
     
     def restore_checkpoint(self, epoch_n):
-        ckp = t.load('checkpoints/checkpoint_{:03d}.ckp'.format(epoch_n), map_location='cuda' if self._cuda else None)
+        ckp = t.load('checkpoints/checkpoint_{:03d}.ckp'.format(epoch_n), map_location='cuda' if self.cuda_status else None)
         self._model.load_state_dict(ckp['state_dict']) 
        
     def save_onnx(self, fn):
@@ -66,8 +77,7 @@ class Trainer:
     # every batch contrubutes to the gradient of it's own optimization step        
     def train_step(self, x, y):
         self._optim.zero_grad()  # reset the gradients
-        x = x.cuda() if self._cuda else x
-        y = y.cuda() if self._cuda else y
+
         output = self._model(x)  # propagate through the network
 
         loss = self._crit(output, y)  # calculate the loss
@@ -78,9 +88,14 @@ class Trainer:
     # test on one batch of data
     # no gradient calculated just checking the results with trained model
     # loss for further evaluation of test phase in comparison to train
+    
+    
+    
+    
+    
+    
     def val_test_step(self, x, y):
-        x = x.cuda() if self._cuda else x
-        y = y.cuda() if self._cuda else y
+
         output = self._model(x)
 
         loss = self._crit(output, y)
@@ -90,12 +105,14 @@ class Trainer:
         self._model.train()  # set training mode
         running_loss = 0.0
         # bar line
-        for batch in tqdm(self._train_dl):
+        for batch in tqdm(self.train_data):
             x, y = batch
+            x = x.cuda() if self.cuda_status else x
+            y = y.cuda() if self.cuda_status else y
             # inside train step we transfer variables to gpu
             loss = self.train_step(x, y)
             running_loss += loss
-        avg_loss = running_loss / len(self._train_dl)
+        avg_loss = running_loss / len(self.train_data)
         return avg_loss
     #test whole batches of test or epoch
     # loss is get in test for better understanding of performance and visualization
@@ -103,57 +120,64 @@ class Trainer:
     def val_test(self):
         self._model.eval()  # set eval mode
         running_loss = 0.0
-        all_preds = []
-        all_labels = []
+        all_together_preds = []
+        all_together_labels = []
         with t.no_grad():
-            for batch in tqdm(self._val_test_dl):
+            for batch in tqdm(self.validate_test_data):
                 x, y = batch
+                x = x.cuda() if self.cuda_status else x
+                y = y.cuda() if self.cuda_status else y
                 loss, preds = self.val_test_step(x, y)
-                running_loss += loss
                 preds = t.sigmoid(preds)  # Apply sigmoid to get probabilities
-                all_preds.append(preds.cpu())
-                all_labels.append(y.cpu())
-        avg_loss = running_loss / len(self._val_test_dl)
 
-        all_preds = t.cat(all_preds)
-        all_labels = t.cat(all_labels)
+                running_loss += loss
+                all_together_preds.append(preds.cpu())
+                all_together_labels.append(y.cpu())
+        # avg loss by number of elements        
+        avg_loss = running_loss / len(self.validate_test_data)
+        # tensors become one
+        all_together_preds = t.cat(all_together_preds)
+        all_together_labels = t.cat(all_together_labels)
 
         # Apply threshold to get binary predictions
-        all_preds = all_preds > 0.5
+        all_together_preds = all_together_preds > 0.5
 
-        F1_mean = f1_score(all_labels.numpy(), all_preds.numpy(), average='weighted')
+        F1_mean = f1_score(all_together_labels.numpy(), all_together_preds.numpy(), average='weighted')
 
-        print(f"Validation Loss: {avg_loss}, F1 Score: {F1_mean}")
+        print(f"Validation Loss is for test: {avg_loss}, F1 Score is this for test: {F1_mean}")
         return avg_loss, F1_mean
 # train test some epochs until meeting criteria    
-    def fit(self, epochs=-1):
-        assert self._early_stopping_patience > 0 or epochs > 0
-        train_losses = []
-        val_losses = []
+    def fit(self, epochc=-1):
+        assert self.early_stop_num > 0 or epochc > 0
         epoch_counter = 0
+        train_loss_list = []
+        valid_losses = []
+       
         scheduler = ReduceLROnPlateau(self._optim, mode='min', factor=0.1, patience=5, verbose=True)
         
         while True:
             epoch_counter += 1
             print(f"Epoch {epoch_counter}")
             train_loss = self.train_epoch()
-            val_loss, val_f1 = self.val_test()
-            train_losses.append(train_loss)
-            val_losses.append(val_loss)
+            validation_loss, validation_f1 = self.val_test()
+            train_loss_list.append(train_loss)
+            valid_losses.append(validation_loss)
             # Adjust learning rate based on validation loss
-            scheduler.step(val_loss)
-            if val_loss < self._best_val_loss:
-                self._best_val_loss = val_loss
-                self._epochs_no_improve = 0
+            if epoch_counter %2 ==0:
+                scheduler.step(validation_loss)
+            if validation_loss < self._best_val_loss:
+                self._best_val_loss = validation_loss
+                self.epochs_number_imp = 0
                 self.save_checkpoint(epoch_counter)
+                
             else:
-                self._epochs_no_improve += 1
-            
-            if self._early_stopping_patience > 0 and self._epochs_no_improve >= self._early_stopping_patience:
-                print("Early stopping triggered.")
+                self.epochs_number_imp += 1
+            if epochc != 0 and epoch_counter >= epochc and epochc > 0:
+                break
+                   
+            if self.early_stop_num != 0 and self.epochs_number_imp >= self.early_stop_num and self.early_stop_num > 0 :
+                print("Early stopping triggered. you have reached the limit of staying the same!")
                 break
             
-            if epochs > 0 and epoch_counter >= epochs:
-                break
-        
-        return train_losses, val_losses
+ 
+        return train_loss_list, valid_losses

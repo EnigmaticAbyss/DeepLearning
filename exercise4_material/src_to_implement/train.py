@@ -15,21 +15,22 @@ data = pd.read_csv('data.csv', delimiter=';')
 # random state will do same form of split everytime so we don't use test data
 # as train data accidentaly!!!
 train_data, val_data = train_test_split(data, test_size=0.2, random_state=42)
-
+# Create an instance of our ResNet model
+resnet_model = model.ResNet()
 # Set up data loading for the training and validation set each using t.utils.data.DataLoader and ChallengeDataset objects
 # these two are for transformations and data aumentation
+val_dataset = ChallengeDataset(val_data, mode='validate')
 train_dataset = ChallengeDataset(train_data, mode='train')
-val_dataset = ChallengeDataset(val_data, mode='val')
+
 # loading data and test in batch size of given 32 samples
 # the  smaller batch size for train makes  difference since it means faster update of params
 # as you know train has bpp and faster change for convergence and more updates
 # shuffel train for less overfit and not validation set for finding the patterns as no needed for it to be shuffeled
 # furthermore shuffel for train help for mini batch gradient working good as in batch we don't have repeated patterns
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-# Create an instance of our ResNet model
-resnet_model = model.ResNet()
+val_loader = DataLoader(val_dataset, batch_size=40, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=40, shuffle=True)
+
 
 # Set up a suitable loss criterion and optimizer
 # Using BCEWithLogitsLoss because it is suitable for multi-label classification
@@ -45,20 +46,21 @@ trainer = Trainer(model=resnet_model,
                   val_test_dl=val_loader,
                   cuda=t.cuda.is_available(),
                   early_stopping_patience=10)
-
+# trainer.restore_checkpoint(046)
+# trainer.save_onnx('checkpoint_{:03d}.onnx'.format(46))
 # epoch = int(sys.argv[1])
-# trainer = Trainer(model=resnet_model,
-#                   crit=criterion,
-#                   optim=optimizer,
-#                   train_dl=train_loader,
-#                   val_test_dl=val_loader,
-#                   cuda=t.cuda.is_available(),
-#                   early_stopping_patience=10)
+# # trainer = Trainer(model=resnet_model,
+# #                   crit=criterion,
+# #                   optim=optimizer,
+# #                   train_dl=train_loader,
+# #                   val_test_dl=val_loader,
+# #                   cuda=t.cuda.is_available(),
+# #                   early_stopping_patience=10)
 # trainer.restore_checkpoint(epoch)
 # trainer.save_onnx('checkpoint_{:03d}.onnx'.format(epoch))
 
 # Train the model
-res = trainer.fit(epochs=50)
+res = trainer.fit(epochc=52)
 
 # Plot the results
 plt.plot(np.arange(len(res[0])), res[0], label='train loss')

@@ -3,53 +3,54 @@ import torch
 import torch.nn as nn
 
 class ResBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1):
+    def __init__(self, input_channels, output_channels, stride=1):
         super(ResBlock, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(out_channels)
-        
-        self.skip = nn.Sequential()
-        if stride != 1 or in_channels != out_channels:
-            self.skip = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride),
-                nn.BatchNorm2d(out_channels)
+   
+        # create a skip status
+        self.resid = nn.Sequential()
+        if stride != 1 or input_channels != output_channels:
+            self.resid = nn.Sequential(
+                nn.Conv2d(input_channels, output_channels, kernel_size=1, stride=stride),
+                nn.BatchNorm2d(output_channels)
             )
-    
+            # Main path for which happens before the block
+        self.begin_block = nn.Sequential(
+            nn.Conv2d(input_channels, output_channels, kernel_size=3, stride=stride, padding=1),
+            nn.BatchNorm2d(output_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(output_channels, output_channels, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(output_channels)
+        )
+        self.reluactiv = nn.ReLU(inplace=True)
+        
     def forward(self, x):
-        identity = self.skip(x)
         
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
         
-        out = self.conv2(out)
-        out = self.bn2(out)
-        
-        out += identity
-        out = self.relu(out)
+        out = self.begin_block(x)
+        # creating the identity finction and add the x to whole procedure
+        added = self.resid(x)
+        out += added
+        out = self.reluactiv(out)
         
         return out
 
 class ResNet(nn.Module):
     def __init__(self):
         super(ResNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.convolut1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
+        self.batchnorm1 = nn.BatchNorm2d(64)
+        self.reluactiv = nn.ReLU(inplace=True)
+        self.maxpooling = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        # creating the blocks
+        self.block1 = self.create_layer(64, 64, stride=1)
+        self.block2 = self.create_layer(64, 128, stride=2)
+        self.block3 = self.create_layer(128, 256, stride=2)
+        self.block4 = self.create_layer(256, 512, stride=2)
         
-        self.layer1 = self._make_layer(64, 64, stride=1)
-        self.layer2 = self._make_layer(64, 128, stride=2)
-        self.layer3 = self._make_layer(128, 256, stride=2)
-        self.layer4 = self._make_layer(256, 512, stride=2)
-        
-        self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.globalaverragepool = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten()
         # transforms the 512 flattended extractted features into two classes linearly
-        self.fc = nn.Linear(512, 2)
+        self.fullyc = nn.Linear(512, 2)
         # since using bcelogits we need logits
         # which is the fc output we don't use sigmooid here that activation of 
         # classification of every single binary label (2 channels 512,2!)
@@ -58,27 +59,30 @@ class ResNet(nn.Module):
         
         
         self.dropout = nn.Dropout(0.5)  # Add dropout layer
-    
-    def _make_layer(self, in_channels, out_channels, stride):
-        return nn.Sequential(
-            ResBlock(in_channels, out_channels, stride),
-            ResBlock(out_channels, out_channels)
-        )
+
     
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
+        output = self.convolut1(x)
+        output = self.batchnorm1(output)
+        output = self.reluactiv(output)
+        output = self.maxpooling(output)
         
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        output = self.block1(output)
+        output = self.block2(output)
+        output = self.block3(output)
+        output = self.block4(output)
+    # final aspect of making no spatial through GAP
+    # flatten for making it usable for fully connected
+    #drop out for regularization    
+        output = self.globalaverragepool(output)
+        output = self.flatten(output)
+        output = self.dropout(output)  # Apply dropout
+        output = self.fullyc(output)
         
-        x = self.global_avg_pool(x)
-        x = self.flatten(x)
-        x = self.dropout(x)  # Apply dropout
-        x = self.fc(x)
-        
-        return x
+        return output
+    
+    def create_layer(self, input_channels, output_channels, stride):
+        return nn.Sequential(
+            ResBlock(input_channels, output_channels, stride),
+            ResBlock(output_channels, output_channels)
+        )
